@@ -4,7 +4,8 @@
   "description": "A timeline prototype of visjs timeline",
   "main": "index.html",
   "dependencies": {
-    "vis": "^4.19.1"
+    "vis": "^4.19.1",
+    "jquery": "^3.2.1"
   },
   "devDependencies": {
     "live-server": "1.0.0"
