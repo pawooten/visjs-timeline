@@ -25,11 +25,11 @@
         var container = document.getElementById('visualization');
 
         var groups = [
-            { id: 1, content: 'All' },
-            { id: 2, content: 'Pathology' },
-            { id: 3, content: 'Physician Notes' },
-            { id: 4, content: 'Transcriptions' },
-            { id: 5, content: 'DICOM' },
+            { id: 'Tab1', content: 'All' },
+            { id: 'Tab2', content: 'Pathology' },
+            { id: 'Tab3', content: 'Physician Notes' },
+            { id: 'Tab4', content: 'Transcriptions' },
+            { id: 'Tab5', content: 'DICOM' },
         ];
 
         //Create a DataSet (allows two way data-binding)
@@ -47,8 +47,8 @@
             Day: 'Day',
             Week: 'Week',
             Month: 'Month',
-            Quarter: 'Quarter',
-            Year: 'Year'
+            Quarter: 'Quarter', /* Counts display number of documents for the tab for a quarter */
+            Year: 'Year' /* Counts display number of document for the tab for a year */
         };
 
         var documentData = [
@@ -75,23 +75,86 @@
              ]},
         ];
         
-        function formatDocumentData( groupBy )
+        function formatDocumentData( groupBy, daySummaries )
         {
             switch ( groupBy )
             {
                 case GroupByType.Day:
-                    break;
+                    return daySummaries;
                 case GroupByType.Week:
-                    break;
+                    return formatWeekView( daySummaries );
                 case GroupByType.Month:
-                    break;
+                    return formatMonthView( daySummaries );
                 case GroupByType.Quarter:
-                    break;
+                    return [];
                 case GroupByType.Year:
-                    break;
+                    return formatYearView( daySummaries );
                 default:
                     console.log( `Unrecognized GroupByType: ${groupBy}` );
             }
+        }
+
+        function formatWeekView( daySummaries )
+        {
+            return [];
+        }
+
+        function formatMonthView( daySummaries )
+        {
+            return [];
+        }
+
+        // function formatYearView( daySummaries )
+        // {
+        //     var yearSummaries = {};
+        //     daySummaries.forEach( function( daySummary ) {
+        //         var date = new Date(daySummary.Date);
+        //         var year = date.getFullYear();
+        //         var yearSummary = yearSummaries[year] || createYearSummary(year);
+        //         yearSummary.count++;
+        //         yearSummary.group = 1; // todo
+        //         yearSummaries[year] = yearSummary;
+        //     } );
+        //     for (var yearSummary in yearSummaries) {
+        //         if (!yearSummaries.hasOwnProperty(yearSummary)) {
+        //             continue;
+        //         }
+        //         yearSummaries[yearSummary].content = 'Documents: ' + yearSummaries[yearSummary].count;
+        //     }
+        //     // Might need polyfill: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/values
+        //     return Object.values( yearSummaries );
+        // }
+
+        function formatYearView2( tabSummaries )
+        {
+          var summaries = [];
+          Object.values( tabSummaries ).forEach( function( tabSummary ) {
+            var tabYearSummary = {};
+            tabSummary.DaySummaries.forEach( function( daySummary ) {
+              var date = new Date( daySummary.Date );              
+              var year = ( date ).getUTCFullYear();
+              var yearSummary = tabYearSummary[ year ] || createYearSummary( year, date, tabSummary.Tab );
+              yearSummary.count += daySummary.Count;
+              if (date < yearSummary.start ) {
+                yearSummary.start = date;
+              }
+              if ( date > yearSummary.end ) {
+                yearSummary.end = date;
+              }
+              // TODO: is it worth iterating over the array again later, to avoid formatting this string unnecessarily in intermediate iterations?
+              yearSummary.content = yearSummary.count.toString();
+              tabYearSummary[ year ] = yearSummary;
+            });
+            summaries = summaries.concat( Object.values( tabYearSummary ) );
+          });
+          return summaries;
+        }
+
+        function createYearSummary( year, date, tabID )
+        {
+            // var startDate = new Date(year, 0, 1);
+            // var endDate = new Date(year, 11, 31, 23, 59, 59);
+            return { start: date, end: date, group: tabID, count: 0 };
         }
 
         // Configuration for the Timeline
@@ -101,8 +164,8 @@
             margin: {
                 item: 20
             },
-            zoomMin: 6.048e+8, // 6.048e+8 = 1 week
-            zoomMax: 3.154e+10, // 3.154e+10 = 1 year
+            zoomMin: 3.154e+10, // 6.048e+8 = 1 week
+            zoomMax: 3.154e+11, // 3.154e+10 = 1 year, 10 years = 3.154e+11
             end: new Date() // specify the current datetime as the end date of the timeline time axis (rather than the last item)
         };
 
@@ -113,8 +176,24 @@
 
         $(function() {
         // Create a Timeline
-        var timeline = new vis.Timeline(container, dataSet, groups, options);
-        timeline.on( 'rangechanged', onDateRangeChanged );
+        // var timeline = new vis.Timeline(container, dataSet, groups, options);
+        // timeline.on( 'rangechanged', onDateRangeChanged );
+        //var result = new vis.DataSet( formatYearView( documentData[0].DaySummaries ) );
+        var result = new vis.DataSet( formatYearView2( documentData ) );
+        var timeline = new vis.Timeline( container, result, groups, options );
+
+        // var items = new vis.DataSet([
+        // {
+        //     start: new Date(2016, 1, 1),
+        //     end: new Date(2016, 11, 31),  // end is optional
+        //     content: 'Trajectory A',
+        //     group: 1
+        //     // Optional: fields 'id', 'type', 'group', 'className', 'style'
+        // }
+        // // more items...
+        // ]);
+        // var timeline = new vis.Timeline(container, items, groups, options);
+
         });
         </script>
     </body>
