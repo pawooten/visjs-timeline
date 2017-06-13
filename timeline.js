@@ -65,6 +65,6 @@ function onDateRangeChanged( e )
 
 $(function() {
   var result = new vis.DataSet( formatView( documentData, GroupByType.Day ) );
-  var timeline = new vis.Timeline( container, result, groups, options );
+  var timeline = new vis.Timeline( $('#visualization')[0], result, groups, options );
   timeline.on( 'rangechanged', onDateRangeChanged );
 });
